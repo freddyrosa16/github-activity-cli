@@ -2,22 +2,40 @@ import requests
 
 
 def main():
-    print("Output:")
     url = "https://api.github.com/users/freddyrosa16/events"
     response = requests.get(url)
+    
+    if response.status_code != 200:
+        print("Request failed:", response.status_code)
+        return 
 
-    if response.status_code == 200:
-        data = response.json()
-        for event in data:
-            event_type = event["type"]
-            repo_name = event["repo"]["name"]
+    events = response.json()
 
-            if event == "PushEvent":
-                commit_count = event["payload"].get("size", 0)
-                print(f"Pushed {commit_count} commits to {repo_name}")
-    else:
-        print(f"Error: {response.status_code}")
+    print("Output: ")
+    for event in events:
+        event_type = event["type"]
+        repo = event["repo"]["name"]
+
+        if event_type == "PushEvent":
+            commits = event["payload"].get("commits", [])
+            print(f"Pushed {len(commits)} commits(s) to {repo}")
+
+        elif event_type == "CreateEvent":
+            ref_type = event["payload"].get("ref_type")
+            print(f"Created a {ref_type} in {repo}")
+
+        elif event_type == "WatchEvent":
+            print(f"Starred {repo}")
+
+        elif event_type == "ForkEvent":
+            print(f"Forked {repo}")
+
+        elif event_type == "IssuesEvent":
+            action = event["payload"].get("action")
+            print(f"Issues {action} in {repo}")
+        else:
+            print(f"{event_type} in {repo}")
 
 
-if "__main__" == __name__:
+if __name__ == "__main__":
     main()
